@@ -24,6 +24,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.tajo.IntegrationTest;
 import org.apache.tajo.QueryTestCaseBase;
 import org.apache.tajo.TajoConstants;
+import org.apache.tajo.conf.TajoConf;
 import org.apache.tajo.conf.TajoConf.ConfVars;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -42,7 +43,7 @@ public class TestCreateIndex extends QueryTestCaseBase {
   }
 
   private void checkIndexExist(String indexName) throws IOException, ServiceException {
-    Path indexPath = new Path(conf.getVar(ConfVars.WAREHOUSE_DIR), "default/" + indexName);
+    Path indexPath = new Path(TajoConf.getWarehouseDir(conf), "default/" + indexName);
     FileSystem fs = indexPath.getFileSystem(conf);
     assertTrue(fs.exists(indexPath));
     assertEquals(2, fs.listStatus(indexPath).length);
@@ -50,7 +51,7 @@ public class TestCreateIndex extends QueryTestCaseBase {
   }
 
   private void checkIndexNotExist(String indexName) throws IOException, ServiceException {
-    Path indexPath = new Path(conf.getVar(ConfVars.WAREHOUSE_DIR), "default/" + indexName);
+    Path indexPath = new Path(TajoConf.getWarehouseDir(conf), "default/" + indexName);
     FileSystem fs = indexPath.getFileSystem(conf);
     assertFalse(fs.exists(indexPath));
     assertIndexNotExists(indexName);

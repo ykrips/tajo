@@ -29,6 +29,7 @@ import org.apache.hadoop.service.AbstractService;
 import org.apache.hadoop.util.StringUtils;
 import org.apache.tajo.QueryId;
 import org.apache.tajo.QueryIdFactory;
+import org.apache.tajo.SessionVars;
 import org.apache.tajo.TajoConstants;
 import org.apache.tajo.algebra.AlterTablespaceSetType;
 import org.apache.tajo.algebra.Expr;
@@ -119,40 +120,25 @@ public class GlobalEngine extends AbstractService {
 
   public SubmitQueryResponse executeQuery(Session session, String query, boolean isJson) {
     LOG.info("Query: " + query);
-    QueryContext queryContext = new QueryContext();
-    queryContext.putAll(session.getAllVariables());
+    QueryContext queryContext = new QueryContext(context.getConf(), session);
     Expr planningContext;
 
     try {
       if (isJson) {
         planningContext = buildExpressionFromJson(query);
       } else {
-        // setting environment variables
-        String [] cmds = query.split(" ");
-        if(cmds != null) {
-          if(cmds[0].equalsIgnoreCase("set")) {
-            String[] params = cmds[1].split("=");
-            context.getConf().set(params[0], params[1]);
-            SubmitQueryResponse.Builder responseBuilder = SubmitQueryResponse.newBuilder();
-            responseBuilder.setUserName(context.getConf().getVar(TajoConf.ConfVars.USERNAME));
-            responseBuilder.setQueryId(QueryIdFactory.NULL_QUERY_ID.getProto());
-            responseBuilder.setResultCode(ClientProtos.ResultCode.OK);
-            return responseBuilder.build();
-          }
-        }
-
         planningContext = buildExpressionFromSql(queryContext, query);
       }
 
       String jsonExpr = planningContext.toJson();
-      LogicalPlan plan = createLogicalPlan(session, planningContext);
+      LogicalPlan plan = createLogicalPlan(queryContext, planningContext);
       SubmitQueryResponse response = executeQueryInternal(queryContext, session, plan, query, jsonExpr);
       return response;
     } catch (Throwable t) {
       context.getSystemMetrics().counter("Query", "errorQuery").inc();
       LOG.error("\nStack Trace:\n" + StringUtils.stringifyException(t));
       SubmitQueryResponse.Builder responseBuilder = SubmitQueryResponse.newBuilder();
-      responseBuilder.setUserName(context.getConf().getVar(TajoConf.ConfVars.USERNAME));
+      responseBuilder.setUserName(queryContext.get(SessionVars.USERNAME));
       responseBuilder.setQueryId(QueryIdFactory.NULL_QUERY_ID.getProto());
       responseBuilder.setIsForwarded(true);
       responseBuilder.setResultCode(ClientProtos.ResultCode.ERROR);
@@ -186,16 +172,22 @@ public class GlobalEngine extends AbstractService {
 
     SubmitQueryResponse.Builder responseBuilder = SubmitQueryResponse.newBuilder();
     responseBuilder.setIsForwarded(false);
-    responseBuilder.setUserName(context.getConf().getVar(TajoConf.ConfVars.USERNAME));
+    responseBuilder.setUserName(queryContext.get(SessionVars.USERNAME));
 
     if (PlannerUtil.checkIfDDLPlan(rootNode)) {
       context.getSystemMetrics().counter("Query", "numDDLQuery").inc();
+//<<<<<<< HEAD
+//=======
+//      updateQuery(queryContext, rootNode.getChild());
+//      responseBuilder.setQueryId(QueryIdFactory.NULL_QUERY_ID.getProto());
+//      responseBuilder.setResultCode(ClientProtos.ResultCode.OK);
+//>>>>>>> ddfc3f33039ee15ab0a2d3fe5890b9acb40aec3d
 
       if (PlannerUtil.checkIfCreateIndexPlan(rootNode)) {
         return createIndex(session, (CreateIndexNode)rootNode.getChild(), queryContext,
             plan, sql, jsonExpr, responseBuilder);
       } else {
-        updateQuery(session, rootNode.getChild());
+        updateQuery(queryContext, rootNode.getChild());
         responseBuilder.setQueryId(QueryIdFactory.NULL_QUERY_ID.getProto());
         responseBuilder.setResultCode(ClientProtos.ResultCode.OK);
 
@@ -332,7 +324,7 @@ public class GlobalEngine extends AbstractService {
     }
 
     TaskAttemptContext taskAttemptContext =
-        new TaskAttemptContext(context.getConf(), queryContext, null, (CatalogProtos.FragmentProto[]) null, stagingDir);
+        new TaskAttemptContext(queryContext, null, (CatalogProtos.FragmentProto[]) null, stagingDir);
     taskAttemptContext.setOutputPath(new Path(stagingResultDir, "part-01-000000"));
 
     EvalExprExec evalExprExec = new EvalExprExec(taskAttemptContext, (EvalExprNode) insertNode.getChild());
@@ -412,7 +404,7 @@ public class GlobalEngine extends AbstractService {
   }
 
 
-  public QueryId updateQuery(Session session, String sql, boolean isJson) throws IOException, SQLException, PlanningException {
+  public QueryId updateQuery(QueryContext queryContext, String sql, boolean isJson) throws IOException, SQLException, PlanningException {
     try {
       LOG.info("SQL: " + sql);
 
@@ -424,13 +416,13 @@ public class GlobalEngine extends AbstractService {
         expr = analyzer.parse(sql);
       }
 
-      LogicalPlan plan = createLogicalPlan(session, expr);
+      LogicalPlan plan = createLogicalPlan(queryContext, expr);
       LogicalRootNode rootNode = plan.getRootBlock().getRoot();
 
       if (!PlannerUtil.checkIfDDLPlan(rootNode)) {
         throw new SQLException("This is not update query:\n" + sql);
       } else {
-        updateQuery(session, rootNode.getChild());
+        updateQuery(queryContext, rootNode.getChild());
         return QueryIdFactory.NULL_QUERY_ID;
       }
     } catch (Exception e) {
@@ -439,40 +431,40 @@ public class GlobalEngine extends AbstractService {
     }
   }
 
-  private boolean updateQuery(Session session, LogicalNode root) throws IOException {
+  private boolean updateQuery(QueryContext queryContext, LogicalNode root) throws IOException {
 
     switch (root.getType()) {
       case CREATE_DATABASE:
         CreateDatabaseNode createDatabase = (CreateDatabaseNode) root;
-        createDatabase(session, createDatabase.getDatabaseName(), null, createDatabase.isIfNotExists());
+        createDatabase(queryContext, createDatabase.getDatabaseName(), null, createDatabase.isIfNotExists());
         return true;
       case DROP_DATABASE:
         DropDatabaseNode dropDatabaseNode = (DropDatabaseNode) root;
-        dropDatabase(session, dropDatabaseNode.getDatabaseName(), dropDatabaseNode.isIfExists());
+        dropDatabase(queryContext, dropDatabaseNode.getDatabaseName(), dropDatabaseNode.isIfExists());
         return true;
       case CREATE_TABLE:
         CreateTableNode createTable = (CreateTableNode) root;
-        createTable(session, createTable, createTable.isIfNotExists());
+        createTable(queryContext, createTable, createTable.isIfNotExists());
         return true;
       case DROP_TABLE:
         DropTableNode dropTable = (DropTableNode) root;
-        dropTable(session, dropTable.getTableName(), dropTable.isIfExists(), dropTable.isPurge());
+        dropTable(queryContext, dropTable.getTableName(), dropTable.isIfExists(), dropTable.isPurge());
         return true;
       case ALTER_TABLESPACE:
         AlterTablespaceNode alterTablespace = (AlterTablespaceNode) root;
-        alterTablespace(session, alterTablespace);
+        alterTablespace(queryContext, alterTablespace);
         return true;
       case ALTER_TABLE:
         AlterTableNode alterTable = (AlterTableNode) root;
-        alterTable(session,alterTable);
+        alterTable(queryContext,alterTable);
         return true;
       case TRUNCATE_TABLE:
         TruncateTableNode truncateTable = (TruncateTableNode) root;
-        truncateTable(session, truncateTable);
+        truncateTable(queryContext, truncateTable);
         return true;
       case DROP_INDEX:
         DropIndexNode dropIndexNode = (DropIndexNode) root;
-        dropIndex(session, dropIndexNode);
+        dropIndex(queryContext, dropIndexNode);
         return true;
 
       default:
@@ -480,10 +472,10 @@ public class GlobalEngine extends AbstractService {
     }
   }
 
-  private LogicalPlan createLogicalPlan(Session session, Expr expression) throws PlanningException {
+  private LogicalPlan createLogicalPlan(QueryContext queryContext, Expr expression) throws PlanningException {
 
     VerificationState state = new VerificationState();
-    preVerifier.verify(session, state, expression);
+    preVerifier.verify(queryContext, state, expression);
     if (!state.verified()) {
       StringBuilder sb = new StringBuilder();
       for (String error : state.getErrorMessages()) {
@@ -492,19 +484,19 @@ public class GlobalEngine extends AbstractService {
       throw new VerifyException(sb.toString());
     }
 
-    LogicalPlan plan = planner.createPlan(session, expression);
+    LogicalPlan plan = planner.createPlan(queryContext, expression);
     if (LOG.isDebugEnabled()) {
       LOG.debug("=============================================");
       LOG.debug("Non Optimized Query: \n" + plan.toString());
       LOG.debug("=============================================");
     }
     LOG.info("Non Optimized Query: \n" + plan.toString());
-    optimizer.optimize(session, plan);
+    optimizer.optimize(queryContext, plan);
     LOG.info("=============================================");
     LOG.info("Optimized Query: \n" + plan.toString());
     LOG.info("=============================================");
 
-    annotatedPlanVerifier.verify(session, state, plan);
+    annotatedPlanVerifier.verify(queryContext, state, plan);
 
     if (!state.verified()) {
       StringBuilder sb = new StringBuilder();
@@ -520,7 +512,7 @@ public class GlobalEngine extends AbstractService {
   /**
    * Alter a given table
    */
-  public void alterTablespace(final Session session, final AlterTablespaceNode alterTablespace) {
+  public void alterTablespace(final QueryContext queryContext, final AlterTablespaceNode alterTablespace) {
 
     final CatalogService catalog = context.getCatalog();
     final String spaceName = alterTablespace.getTablespaceName();
@@ -544,7 +536,7 @@ public class GlobalEngine extends AbstractService {
   /**
    * Alter a given table
    */
-  public void alterTable(final Session session, final AlterTableNode alterTable) throws IOException {
+  public void alterTable(final QueryContext queryContext, final AlterTableNode alterTable) throws IOException {
 
     final CatalogService catalog = context.getCatalog();
     final String tableName = alterTable.getTableName();
@@ -556,7 +548,7 @@ public class GlobalEngine extends AbstractService {
       databaseName = split[0];
       simpleTableName = split[1];
     } else {
-      databaseName = session.getCurrentDatabase();
+      databaseName = queryContext.getCurrentDatabase();
       simpleTableName = tableName;
     }
     final String qualifiedName = CatalogUtil.buildFQName(databaseName, simpleTableName);
@@ -599,7 +591,8 @@ public class GlobalEngine extends AbstractService {
         if (existColumnName(qualifiedName, alterTable.getNewColumnName())) {
           throw new ColumnNameAlreadyExistException(alterTable.getNewColumnName());
         }
-        catalog.alterTable(CatalogUtil.renameColumn(qualifiedName, alterTable.getColumnName(), alterTable.getNewColumnName(), AlterTableType.RENAME_COLUMN));
+        catalog.alterTable(CatalogUtil.renameColumn(qualifiedName, alterTable.getColumnName(),
+            alterTable.getNewColumnName(), AlterTableType.RENAME_COLUMN));
         break;
       case ADD_COLUMN:
         if (existColumnName(qualifiedName, alterTable.getAddNewColumn().getSimpleName())) {
@@ -615,7 +608,8 @@ public class GlobalEngine extends AbstractService {
   /**
    * Truncate table a given table
    */
-  public void truncateTable(final Session session, final TruncateTableNode truncateTableNode) throws IOException {
+  public void truncateTable(final QueryContext queryContext, final TruncateTableNode truncateTableNode)
+      throws IOException {
     List<String> tableNames = truncateTableNode.getTableNames();
     final CatalogService catalog = context.getCatalog();
 
@@ -629,7 +623,7 @@ public class GlobalEngine extends AbstractService {
         databaseName = split[0];
         simpleTableName = split[1];
       } else {
-        databaseName = session.getCurrentDatabase();
+        databaseName = queryContext.getCurrentDatabase();
         simpleTableName = eachTableName;
       }
       final String qualifiedName = CatalogUtil.buildFQName(databaseName, simpleTableName);
@@ -719,13 +713,13 @@ public class GlobalEngine extends AbstractService {
 
   /**
    * Drop the specified index.
-   * @param session user session
+   * @param queryContext query context
    * @param indexName index name
    * @param ifExists if exists
    */
-  public void dropIndex(final Session session, String indexName, boolean ifExists) {
+  public void dropIndex(final QueryContext queryContext, String indexName, boolean ifExists) {
     final CatalogService catalog = context.getCatalog();
-    final String dbName = session.getCurrentDatabase();
+    final String dbName = queryContext.getCurrentDatabase();
 
     boolean exists = catalog.existIndexByName(dbName, indexName);
     LOG.info("index name exist: " + exists);
@@ -751,8 +745,8 @@ public class GlobalEngine extends AbstractService {
     }
   }
 
-  private void dropIndex(final Session session, final DropIndexNode dropIndexNode) {
-    dropIndex(session, dropIndexNode.getIndexName(), dropIndexNode.isIfExists());
+  private void dropIndex(final QueryContext queryContext, final DropIndexNode dropIndexNode) {
+    dropIndex(queryContext, dropIndexNode.getIndexName(), dropIndexNode.isIfExists());
   }
 
   private boolean existColumnName(String tableName, String columnName) {
@@ -760,7 +754,7 @@ public class GlobalEngine extends AbstractService {
     return tableDesc.getSchema().containsByName(columnName) ? true : false;
   }
 
-  private TableDesc createTable(Session session, CreateTableNode createTable, boolean ifNotExists) throws IOException {
+  private TableDesc createTable(QueryContext queryContext, CreateTableNode createTable, boolean ifNotExists) throws IOException {
     TableMeta meta;
 
     if (createTable.hasOptions()) {
@@ -778,7 +772,7 @@ public class GlobalEngine extends AbstractService {
         databaseName = CatalogUtil.extractQualifier(createTable.getTableName());
         tableName = CatalogUtil.extractSimpleName(createTable.getTableName());
       } else {
-        databaseName = session.getCurrentDatabase();
+        databaseName = queryContext.getCurrentDatabase();
         tableName = createTable.getTableName();
       }
 
@@ -787,11 +781,11 @@ public class GlobalEngine extends AbstractService {
       createTable.setPath(tablePath);
     }
 
-    return createTableOnPath(session, createTable.getTableName(), createTable.getTableSchema(),
+    return createTableOnPath(queryContext, createTable.getTableName(), createTable.getTableSchema(),
         meta, createTable.getPath(), createTable.isExternal(), createTable.getPartitionMethod(), ifNotExists);
   }
 
-  public TableDesc createTableOnPath(Session session, String tableName, Schema schema, TableMeta meta,
+  public TableDesc createTableOnPath(QueryContext queryContext, String tableName, Schema schema, TableMeta meta,
                                      Path path, boolean isExternal, PartitionMethodDesc partitionDesc,
                                      boolean ifNotExists)
       throws IOException {
@@ -802,7 +796,7 @@ public class GlobalEngine extends AbstractService {
       databaseName = splitted[0];
       simpleTableName = splitted[1];
     } else {
-      databaseName = session.getCurrentDatabase();
+      databaseName = queryContext.getCurrentDatabase();
       simpleTableName = tableName;
     }
     String qualifiedName = CatalogUtil.buildFQName(databaseName, simpleTableName);
@@ -855,7 +849,7 @@ public class GlobalEngine extends AbstractService {
     }
   }
 
-  public boolean createDatabase(@Nullable Session session, String databaseName,
+  public boolean createDatabase(@Nullable QueryContext queryContext, String databaseName,
                                 @Nullable String tablespace,
                                 boolean ifNotExists) throws IOException {
 
@@ -887,7 +881,7 @@ public class GlobalEngine extends AbstractService {
     return true;
   }
 
-  public boolean dropDatabase(Session session, String databaseName, boolean ifExists) {
+  public boolean dropDatabase(QueryContext queryContext, String databaseName, boolean ifExists) {
 
     boolean exists = catalog.existDatabase(databaseName);
     if(!exists) {
@@ -899,7 +893,7 @@ public class GlobalEngine extends AbstractService {
       }
     }
 
-    if (session.getCurrentDatabase().equals(databaseName)) {
+    if (queryContext.getCurrentDatabase().equals(databaseName)) {
       throw new RuntimeException("ERROR: Cannot drop the current open database");
     }
 
@@ -914,7 +908,7 @@ public class GlobalEngine extends AbstractService {
    * @param tableName to be dropped
    * @param purge Remove all data if purge is true.
    */
-  public boolean dropTable(Session session, String tableName, boolean ifExists, boolean purge) {
+  public boolean dropTable(QueryContext queryContext, String tableName, boolean ifExists, boolean purge) {
     CatalogService catalog = context.getCatalog();
 
     String databaseName;
@@ -924,7 +918,7 @@ public class GlobalEngine extends AbstractService {
       databaseName = splitted[0];
       simpleTableName = splitted[1];
     } else {
-      databaseName = session.getCurrentDatabase();
+      databaseName = queryContext.getCurrentDatabase();
       simpleTableName = tableName;
     }
     String qualifiedName = CatalogUtil.buildFQName(databaseName, simpleTableName);

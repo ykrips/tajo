@@ -138,6 +138,15 @@ public class TestSelectQuery extends QueryTestCaseBase {
     cleanupQuery(res);
   }
 
+  @Test
+  public final void testSelectColumnAliasExistingInRelation3() throws Exception {
+    // This is a reproduction code and validator of TAJO-975 Bug
+    // Please see TAJO-975 in order to know this test in detail.
+    ResultSet res = executeQuery();
+    assertResultSet(res);
+    cleanupQuery(res);
+  }
+
 
   @Test
   public final void testSelectSameConstantsWithDifferentAliases() throws Exception {
@@ -423,8 +432,8 @@ public class TestSelectQuery extends QueryTestCaseBase {
   @Test
   public final void testNowInMultipleTasks() throws Exception {
     KeyValueSet tableOptions = new KeyValueSet();
-    tableOptions.put(StorageConstants.CSVFILE_DELIMITER, StorageConstants.DEFAULT_FIELD_DELIMITER);
-    tableOptions.put(StorageConstants.CSVFILE_NULL, "\\\\N");
+    tableOptions.set(StorageConstants.CSVFILE_DELIMITER, StorageConstants.DEFAULT_FIELD_DELIMITER);
+    tableOptions.set(StorageConstants.CSVFILE_NULL, "\\\\N");
 
     Schema schema = new Schema();
     schema.addColumn("id", Type.INT4);
@@ -433,7 +442,7 @@ public class TestSelectQuery extends QueryTestCaseBase {
     TajoTestingCluster.createTable("table11", schema, tableOptions, data, 2);
 
     try {
-      testingCluster.setAllTajoDaemonConfValue(ConfVars.TESTCASE_MIN_TASK_NUM.varname, "2");
+      testingCluster.setAllTajoDaemonConfValue(ConfVars.$TEST_MIN_TASK_NUM.varname, "2");
 
       ResultSet res = executeString("select concat(substr(to_char(now(),'yyyymmddhh24miss'), 1, 14), 'aaa'), sleep(1) from table11");
 
@@ -465,9 +474,30 @@ public class TestSelectQuery extends QueryTestCaseBase {
       }
       assertEquals(5, numRecords);
     } finally {
-      testingCluster.setAllTajoDaemonConfValue(ConfVars.TESTCASE_MIN_TASK_NUM.varname,
-          ConfVars.TESTCASE_MIN_TASK_NUM.defaultVal);
+      testingCluster.setAllTajoDaemonConfValue(ConfVars.$TEST_MIN_TASK_NUM.varname,
+          ConfVars.$TEST_MIN_TASK_NUM.defaultVal);
       executeString("DROP TABLE table11 PURGE");
     }
+  }
+
+  @Test
+  public void testCaseWhenRound() throws Exception {
+    /*
+    select *
+        from (select n_nationkey as key,
+    case
+      when n_nationkey > 6 then round((n_nationkey * 100 / 2.123) / (n_regionkey * 50 / 2.123), 2) else 100.0 end as val
+    from
+      nation
+    where
+      n_regionkey > 0 and n_nationkey > 0
+    ) a
+    order by
+      a.key
+    */
+
+    ResultSet res = executeQuery();
+    assertResultSet(res);
+    cleanupQuery(res);
   }
 }

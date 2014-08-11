@@ -564,7 +564,7 @@ public class TestCatalog {
 
     String tableName = CatalogUtil.buildFQName(DEFAULT_DATABASE_NAME, "addedtable");
     KeyValueSet opts = new KeyValueSet();
-    opts.put("file.delimiter", ",");
+    opts.set("file.delimiter", ",");
     TableMeta meta = CatalogUtil.newTableMeta(StoreType.CSV, opts);
 
 
@@ -604,7 +604,7 @@ public class TestCatalog {
 
     String tableName = CatalogUtil.buildFQName(DEFAULT_DATABASE_NAME, "addedtable");
     KeyValueSet opts = new KeyValueSet();
-    opts.put("file.delimiter", ",");
+    opts.set("file.delimiter", ",");
     TableMeta meta = CatalogUtil.newTableMeta(StoreType.CSV, opts);
 
     Schema partSchema = new Schema();
@@ -642,7 +642,7 @@ public class TestCatalog {
 
     String tableName = CatalogUtil.buildFQName(TajoConstants.DEFAULT_DATABASE_NAME, "addedtable");
     KeyValueSet opts = new KeyValueSet();
-    opts.put("file.delimiter", ",");
+    opts.set("file.delimiter", ",");
     TableMeta meta = CatalogUtil.newTableMeta(StoreType.CSV, opts);
 
     Schema partSchema = new Schema();
@@ -679,7 +679,7 @@ public class TestCatalog {
 
     String tableName = CatalogUtil.buildFQName(TajoConstants.DEFAULT_DATABASE_NAME, "addedtable");
     KeyValueSet opts = new KeyValueSet();
-    opts.put("file.delimiter", ",");
+    opts.set("file.delimiter", ",");
     TableMeta meta = CatalogUtil.newTableMeta(StoreType.CSV, opts);
 
     Schema partSchema = new Schema();
@@ -716,7 +716,7 @@ public class TestCatalog {
 
     String tableName = CatalogUtil.buildFQName(DEFAULT_DATABASE_NAME, "addedtable");
     KeyValueSet opts = new KeyValueSet();
-    opts.put("file.delimiter", ",");
+    opts.set("file.delimiter", ",");
     TableMeta meta = CatalogUtil.newTableMeta(StoreType.CSV, opts);
 
     Schema partSchema = new Schema();
