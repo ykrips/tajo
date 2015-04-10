@@ -18,46 +18,32 @@
 
 package org.apache.tajo.catalog.predicates.spi;
 
-import org.apache.tajo.catalog.CatalogUtil;
-import org.apache.tajo.catalog.predicates.DBMSTable;
+import org.apache.tajo.catalog.predicates.Expression;
+import org.apache.tajo.catalog.predicates.Predicate;
 
-/**
- * It represents a table on DBMS.
- */
-public class DBMSTableImpl implements DBMSTable {
-
-  private String databaseName;
+public class EqualPredicateImpl extends AbstractPredicateImpl implements Predicate {
   
-  private String tableName;
+  private final Expression<?> leftSideExpression;
   
-  public DBMSTableImpl(String databaseName, String tableName) {
-    this.databaseName = databaseName;
-    this.tableName = tableName;
-  }
+  private final Expression<?> rightSideExpression;
 
-  @Override
-  public String getDatabaseName() {
-    return databaseName;
-  }
-
-  @Override
-  public void setDatabaseName(String databaseName) {
-    this.databaseName = databaseName;
-  }
-
-  @Override
-  public String getTableName() {
-    return tableName;
-  }
-
-  @Override
-  public void setTableName(String tableName) {
-    this.tableName = tableName;
+  public EqualPredicateImpl(Expression<?> leftSideExpression, Expression<?> rightSideExpression) {
+    super();
+    this.leftSideExpression = leftSideExpression;
+    this.rightSideExpression = rightSideExpression;
   }
 
   @Override
   public String toSQLString() {
-    return CatalogUtil.getCanonicalTableName(databaseName, tableName);
+    StringBuilder queryBuilder = new StringBuilder();
+    queryBuilder.append(leftSideExpression.toSQLString()).append(" ");
+    if (isNot()) {
+      queryBuilder.append("<>");
+    } else {
+      queryBuilder.append("=");
+    }
+    queryBuilder.append(" ").append(rightSideExpression.toSQLString());
+    return queryBuilder.toString();
   }
-  
+
 }

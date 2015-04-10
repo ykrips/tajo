@@ -19,17 +19,23 @@
 package org.apache.tajo.catalog.predicates.spi;
 
 import org.apache.tajo.catalog.predicates.Expression;
+import org.apache.tajo.catalog.predicates.Predicate;
 
-public class LiteralExpressionImpl<T> extends ExpressionImpl<T> implements Expression<T> {
-
-  public LiteralExpressionImpl(Class<T> dataClass) {
-    super(dataClass);
+public class NotPredicateImpl extends AbstractPredicateImpl implements Predicate {
+  
+  private Expression<Boolean> valueExpression;
+  
+  public NotPredicateImpl(Expression<Boolean> value) {
+    super();
+    this.valueExpression = value;
   }
 
   @Override
   public String toSQLString() {
-    // TODO Auto-generated method stub
-    return null;
+    StringBuilder queryBuilder = new StringBuilder();
+    queryBuilder.append("NOT").append(" ")
+      .append(valueExpression.toSQLString());
+    return queryBuilder.toString();
   }
 
 }

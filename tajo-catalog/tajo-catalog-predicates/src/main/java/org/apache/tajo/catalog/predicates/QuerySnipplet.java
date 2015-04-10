@@ -18,14 +18,8 @@
 
 package org.apache.tajo.catalog.predicates;
 
-public interface DBMSTable extends QuerySnipplet {
+public interface QuerySnipplet {
 
-  void setTableName(String tableName);
-
-  String getTableName();
-
-  void setDatabaseName(String databaseName);
-
-  String getDatabaseName();
-
+  String toSQLString();
+  
 }

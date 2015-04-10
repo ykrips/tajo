@@ -28,4 +28,8 @@ public interface JoinTable extends DBMSTable {
   
   List<Predicate> getPredicates();
   
+  DBMSTable getLeftSide();
+  
+  DBMSTable getRightSide();
+  
 }

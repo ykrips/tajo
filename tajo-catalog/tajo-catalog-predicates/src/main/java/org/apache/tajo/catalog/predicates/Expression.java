@@ -23,7 +23,7 @@ import java.util.Collection;
 /**
  * Represent a query expression.
  */
-public interface Expression<T> {
+public interface Expression<T> extends QuerySnipplet {
 
   /**
    * Create a predicate to check whether the expression is null.
@@ -46,9 +46,6 @@ public interface Expression<T> {
   
   Predicate in(Expression<?>... values);
   
-  Predicate in(Collection<?>... values);
+  Predicate in(Collection<?> values);
   
-  Predicate in(Expression<Collection<?>> values);
-  
-  String toSQLString();
 }

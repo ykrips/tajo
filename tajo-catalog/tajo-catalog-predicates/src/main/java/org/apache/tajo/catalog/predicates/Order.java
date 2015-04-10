@@ -20,7 +20,7 @@ package org.apache.tajo.catalog.predicates;
 
 import java.util.List;
 
-public interface Order {
+public interface Order extends QuerySnipplet {
   
   boolean isAscending();
 

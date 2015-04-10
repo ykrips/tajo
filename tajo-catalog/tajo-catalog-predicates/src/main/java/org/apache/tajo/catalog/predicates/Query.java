@@ -22,7 +22,7 @@ import java.util.List;
 
 import org.apache.tajo.algebra.JoinType;
 
-public interface Query {
+public interface Query extends QuerySnipplet {
 
   Query select(Expression<?>... expr);
   
@@ -37,5 +37,7 @@ public interface Query {
   Query groupBy(List<Expression<?>> expr);
   
   Query having(Predicate... predicates);
+  
+  Query orderBy(Order... orders);
   
 }

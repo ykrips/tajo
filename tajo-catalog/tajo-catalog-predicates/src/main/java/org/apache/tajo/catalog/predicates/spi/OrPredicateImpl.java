@@ -15,49 +15,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.tajo.catalog.predicates.spi;
 
-import org.apache.tajo.catalog.CatalogUtil;
-import org.apache.tajo.catalog.predicates.DBMSTable;
+import org.apache.tajo.catalog.predicates.Expression;
+import org.apache.tajo.catalog.predicates.Predicate;
 
-/**
- * It represents a table on DBMS.
- */
-public class DBMSTableImpl implements DBMSTable {
-
-  private String databaseName;
+public class OrPredicateImpl extends AbstractPredicateImpl implements Predicate {
   
-  private String tableName;
+  private final Expression<Boolean> leftSideExpression;
   
-  public DBMSTableImpl(String databaseName, String tableName) {
-    this.databaseName = databaseName;
-    this.tableName = tableName;
+  private final Expression<Boolean> rightSideExpression;
+
+  public OrPredicateImpl(Expression<Boolean> leftSideExpression, Expression<Boolean> rightSideExpression) {
+    super();
+    this.leftSideExpression = leftSideExpression;
+    this.rightSideExpression = rightSideExpression;
   }
 
-  @Override
-  public String getDatabaseName() {
-    return databaseName;
-  }
-
-  @Override
-  public void setDatabaseName(String databaseName) {
-    this.databaseName = databaseName;
-  }
-
-  @Override
-  public String getTableName() {
-    return tableName;
-  }
-
-  @Override
-  public void setTableName(String tableName) {
-    this.tableName = tableName;
-  }
 
   @Override
   public String toSQLString() {
-    return CatalogUtil.getCanonicalTableName(databaseName, tableName);
+    StringBuilder queryBuilder = new StringBuilder();
+    queryBuilder.append(leftSideExpression.toSQLString()).append(" ")
+      .append("OR").append(" ").append(rightSideExpression.toSQLString());
+    return queryBuilder.toString();
   }
-  
+
 }

@@ -30,9 +30,9 @@ import org.apache.tajo.common.TajoDataTypes;
 public interface PredicateBuilder {
 
   // ordering
-  Order asc(Expression<?> expr);
+  Order asc(Expression<?>... expr);
   
-  Order desc(Expression<?> expr);
+  Order desc(Expression<?>... expr);
   
   // boolean operators
   Predicate and(Expression<Boolean> left, Expression<Boolean> right);

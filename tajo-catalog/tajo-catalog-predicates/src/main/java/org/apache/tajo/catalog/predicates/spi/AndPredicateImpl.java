@@ -16,26 +16,29 @@
  * limitations under the License.
  */
 
-package org.apache.tajo.catalog.predicates;
+package org.apache.tajo.catalog.predicates.spi;
 
-import java.util.List;
+import org.apache.tajo.catalog.predicates.Expression;
+import org.apache.tajo.catalog.predicates.Predicate;
 
-import org.apache.tajo.algebra.JoinType;
+public class AndPredicateImpl extends AbstractPredicateImpl implements Predicate {
+  
+  private final Expression<Boolean> leftSideExpression;
+  
+  private final Expression<Boolean> rightSideExpression;
+  
+  public AndPredicateImpl(Expression<Boolean> left, Expression<Boolean> right) {
+    super();
+    this.leftSideExpression = left;
+    this.rightSideExpression = right;
+  }
 
-public interface SubQuery extends QuerySnipplet {
-  
-  SubQuery select(Expression<?>... expr);
-  
-  SubQuery select(List<Expression<?>> expr);
-  
-  SubQuery from(DBMSTable table);
-  
-  SubQuery join(DBMSTable left, DBMSTable right, JoinType joinType, Predicate... predicates);
-  
-  SubQuery groupBy(Expression<?>... expr);
-  
-  SubQuery groupBy(List<Expression<?>> expr);
-  
-  SubQuery having(Predicate... predicates);
+  @Override
+  public String toSQLString() {
+    StringBuilder queryBuilder = new StringBuilder();
+    queryBuilder.append(leftSideExpression.toSQLString()).append(" ")
+      .append("AND").append(" ").append(rightSideExpression.toSQLString());
+    return queryBuilder.toString();
+  }
 
 }

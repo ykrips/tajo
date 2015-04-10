@@ -16,16 +16,35 @@
  * limitations under the License.
  */
 
-package org.apache.tajo.catalog.predicates;
+package org.apache.tajo.catalog.predicates.spi;
 
-public interface DBMSTable extends QuerySnipplet {
+import org.apache.tajo.catalog.predicates.Expression;
 
-  void setTableName(String tableName);
+public class LiteralImpl<T> extends ExpressionImpl<T> implements Expression<T> {
+  
+  private T literal;
 
-  String getTableName();
+  public LiteralImpl(Class<T> dataClass) {
+    super(dataClass);
+  }
+  
+  public Expression<T> setLiteralValue(T literal) {
+    this.literal = literal;
+    return this;
+  }
 
-  void setDatabaseName(String databaseName);
-
-  String getDatabaseName();
+  @Override
+  public String toSQLString() {
+    Class<T> dataClass = getDataClass();
+    String returnValue;
+    
+    if (String.class.isAssignableFrom(dataClass)) {
+      returnValue = "'" + literal.toString() + "'";
+    } else {
+      returnValue = literal.toString();
+    }
+    
+    return returnValue;
+  }
 
 }

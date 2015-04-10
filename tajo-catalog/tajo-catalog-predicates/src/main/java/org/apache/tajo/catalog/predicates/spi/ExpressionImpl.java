@@ -19,6 +19,7 @@
 package org.apache.tajo.catalog.predicates.spi;
 
 import java.util.Collection;
+
 import org.apache.tajo.catalog.predicates.Expression;
 import org.apache.tajo.catalog.predicates.Predicate;
 
@@ -31,6 +32,10 @@ public abstract class ExpressionImpl<T> implements Expression<T> {
   
   public ExpressionImpl(Class<T> dataClass) {
     this.dataClass = dataClass;
+  }
+  
+  protected Class<T> getDataClass() {
+    return this.dataClass;
   }
 
   @Override
@@ -45,26 +50,29 @@ public abstract class ExpressionImpl<T> implements Expression<T> {
 
   @Override
   public Predicate in(Object... values) {
-    // TODO Auto-generated method stub
-    return null;
+    if (values == null || values.length == 0) {
+      throw new IllegalArgumentException("values is null or empty.");
+    }
+    Class<?> inDataClass = values[0].getClass();
+    return new InPredicate(inDataClass, this).addParameters(values);
   }
 
   @Override
   public Predicate in(Expression<?>... values) {
-    // TODO Auto-generated method stub
-    return null;
+    if (values == null || values.length == 0) {
+      throw new IllegalArgumentException("values is null or empty.");
+    }
+    Class<?> inDataClass = ((ExpressionImpl<?>)values[0]).getDataClass();
+    return new InPredicate(inDataClass, this).addParameters(values);
   }
 
   @Override
-  public Predicate in(Collection<?>... values) {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
-  @Override
-  public Predicate in(Expression<Collection<?>> values) {
-    // TODO Auto-generated method stub
-    return null;
+  public Predicate in(Collection<?> values) {
+    if (values == null || values.size() <= 0) {
+      throw new IllegalArgumentException("values is null or empty.");
+    }
+    Class<?> inDataClass = values.iterator().next().getClass();
+    return new InPredicate(inDataClass, this).addParameters(values);
   }
 
 }
