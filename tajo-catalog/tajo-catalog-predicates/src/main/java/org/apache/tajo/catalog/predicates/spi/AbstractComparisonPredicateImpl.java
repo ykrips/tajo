@@ -21,26 +21,36 @@ package org.apache.tajo.catalog.predicates.spi;
 import org.apache.tajo.catalog.predicates.Expression;
 import org.apache.tajo.catalog.predicates.Predicate;
 
-/**
- * This predicate states equal or not-equal expressions.
- */
-public class EqualPredicateImpl extends AbstractComparisonPredicateImpl implements Predicate {
+public abstract class AbstractComparisonPredicateImpl extends AbstractPredicateImpl implements Predicate {
+
+  private final Expression<?> leftSideExpression;
   
-  public EqualPredicateImpl(Expression<?> leftSideExpression, Expression<?> rightSideExpression) {
-    super(leftSideExpression, rightSideExpression);
+  private final Expression<?> rightSideExpression;
+  
+  private boolean equal;
+
+  public AbstractComparisonPredicateImpl(Expression<?> leftSideExpression, Expression<?> rightSideExpression) {
+    super();
+    this.leftSideExpression = leftSideExpression;
+    this.rightSideExpression = rightSideExpression;
+    this.equal = false;
+  }
+  
+  public Predicate equal() {
+    this.equal = true;
+    return this;
   }
 
-  @Override
-  public String toSQLString() {
-    StringBuilder queryBuilder = new StringBuilder();
-    queryBuilder.append(getLeftSideExpression().toSQLString()).append(" ");
-    if (isEqual()) {
-      queryBuilder.append("=");
-    } else {
-      queryBuilder.append("<>");
-    }
-    queryBuilder.append(" ").append(getRightSideExpression().toSQLString());
-    return queryBuilder.toString();
+  public Expression<?> getLeftSideExpression() {
+    return leftSideExpression;
   }
 
+  public Expression<?> getRightSideExpression() {
+    return rightSideExpression;
+  }
+
+  public boolean isEqual() {
+    return equal;
+  }
+  
 }

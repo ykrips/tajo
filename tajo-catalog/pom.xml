@@ -38,6 +38,7 @@
     <module>tajo-catalog-server</module>
     <module>tajo-catalog-client</module>
     <module>tajo-catalog-drivers</module>
+    <module>tajo-catalog-predicates</module>
   </modules>
 
   <build>

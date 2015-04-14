@@ -27,7 +27,7 @@
   <modelVersion>4.0.0</modelVersion>
   <artifactId>tajo-catalog-predicates</artifactId>
   <packaging>jar</packaging>
-  <name>Tajo Catalog Common</name>
+  <name>Tajo Catalog Predicates Library</name>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>

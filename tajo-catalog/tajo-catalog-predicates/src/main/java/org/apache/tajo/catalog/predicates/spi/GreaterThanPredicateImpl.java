@@ -22,11 +22,11 @@ import org.apache.tajo.catalog.predicates.Expression;
 import org.apache.tajo.catalog.predicates.Predicate;
 
 /**
- * This predicate states equal or not-equal expressions.
+ * This predicate states greater-than or greater-than-or-equal expressions.
  */
-public class EqualPredicateImpl extends AbstractComparisonPredicateImpl implements Predicate {
-  
-  public EqualPredicateImpl(Expression<?> leftSideExpression, Expression<?> rightSideExpression) {
+public class GreaterThanPredicateImpl extends AbstractComparisonPredicateImpl implements Predicate {
+
+  public GreaterThanPredicateImpl(Expression<?> leftSideExpression, Expression<?> rightSideExpression) {
     super(leftSideExpression, rightSideExpression);
   }
 
@@ -34,10 +34,9 @@ public class EqualPredicateImpl extends AbstractComparisonPredicateImpl implemen
   public String toSQLString() {
     StringBuilder queryBuilder = new StringBuilder();
     queryBuilder.append(getLeftSideExpression().toSQLString()).append(" ");
+    queryBuilder.append(">");
     if (isEqual()) {
       queryBuilder.append("=");
-    } else {
-      queryBuilder.append("<>");
     }
     queryBuilder.append(" ").append(getRightSideExpression().toSQLString());
     return queryBuilder.toString();

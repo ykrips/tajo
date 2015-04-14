@@ -18,12 +18,7 @@
 
 package org.apache.tajo.catalog.predicates.spi;
 
-import java.util.Arrays;
-import java.util.List;
-
-import org.apache.tajo.catalog.predicates.Expression;
 import org.apache.tajo.catalog.predicates.Predicate;
-import org.apache.tajo.util.TUtil;
 
 /**
  * 
@@ -31,7 +26,6 @@ import org.apache.tajo.util.TUtil;
 public abstract class AbstractPredicateImpl extends ExpressionImpl<Boolean> implements Predicate {
   
   private boolean isNotAnnotated;
-  private final List<Expression<Boolean>> boolExpressions = TUtil.newList();
 
   public AbstractPredicateImpl() {
     super(Boolean.class);
@@ -40,16 +34,6 @@ public abstract class AbstractPredicateImpl extends ExpressionImpl<Boolean> impl
   @Override
   public boolean isNot() {
     return isNotAnnotated;
-  }
-
-  @Override
-  public List<Expression<Boolean>> getExpressions() {
-    return boolExpressions;
-  }
-  
-  protected Predicate addExpressions(Expression<Boolean>... expressions) {
-    boolExpressions.addAll(Arrays.asList(expressions));
-    return this;
   }
 
   @Override

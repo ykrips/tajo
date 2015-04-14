@@ -21,6 +21,7 @@ package org.apache.tajo.catalog.predicates;
 import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
+
 import org.apache.tajo.algebra.JoinType;
 import org.apache.tajo.common.TajoDataTypes;
 
@@ -53,35 +54,35 @@ public interface PredicateBuilder {
   // comparing operators
   Predicate equal(Expression<?> left, Expression<?> right);
   
-  Predicate equal(Expression<?> left, TajoDataTypes.Type dataType, Object right);
+  <T> Predicate equal(Expression<?> left, Class<T> dataType, T right);
   
   Predicate notEqual(Expression<?> left, Expression<?> right);
   
-  Predicate notEqual(Expression<?> left, TajoDataTypes.Type dataType, Object right);
+  <T> Predicate notEqual(Expression<?> left, Class<T> dataType, T right);
   
   Predicate greaterThan(Expression<?> left, Expression<?> right);
   
-  Predicate greaterThan(Expression<?> left, TajoDataTypes.Type dataType, Object right);
+  <T> Predicate greaterThan(Expression<?> left, Class<T> dataType, T right);
   
   Predicate greaterThanOrEqual(Expression<?> left, Expression<?> right);
   
-  Predicate greaterThanOrEqual(Expression<?> left, TajoDataTypes.Type dataType, Object right);
+  <T> Predicate greaterThanOrEqual(Expression<?> left, Class<T> dataType, T right);
   
   Predicate lessThan(Expression<?> left, Expression<?> right);
   
-  Predicate lessThan(Expression<?> left, TajoDataTypes.Type dataType, Object right);
+  <T> Predicate lessThan(Expression<?> left, Class<T> dataType, T right);
   
   Predicate lessThanOrEqual(Expression<?> left, Expression<?> right);
   
-  Predicate lessThanOrEqual(Expression<?> left, TajoDataTypes.Type dataType, Object right);
+  <T> Predicate lessThanOrEqual(Expression<?> left, Class<T> dataType, T right);
   
   Predicate between(Expression<?> value, Expression<?> left, Expression<?> right);
   
-  Predicate between(Expression<?> value, TajoDataTypes.Type dataType, Object left, Object right);
+  <T> Predicate between(Expression<?> value, Class<T> dataType, T left, T right);
   
   Predicate notBetween(Expression<?> value, Expression<?> left, Expression<?> right);
   
-  Predicate notBetween(Expression<?> value, TajoDataTypes.Type dataType, Object left, Object right);
+  <T> Predicate notBetween(Expression<?> value, Class<T> dataType, T left, T right);
   
   Predicate like(Expression<String> value, String pattern);
   

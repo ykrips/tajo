@@ -21,25 +21,40 @@ package org.apache.tajo.catalog.predicates.spi;
 import org.apache.tajo.catalog.predicates.Expression;
 import org.apache.tajo.catalog.predicates.Predicate;
 
-/**
- * This predicate states equal or not-equal expressions.
- */
-public class EqualPredicateImpl extends AbstractComparisonPredicateImpl implements Predicate {
+public class BetweenPredicateImpl extends AbstractPredicateImpl implements Predicate {
   
-  public EqualPredicateImpl(Expression<?> leftSideExpression, Expression<?> rightSideExpression) {
-    super(leftSideExpression, rightSideExpression);
+  private final Expression<?> valueExpression;
+  
+  private final Expression<?> leftSideExpression;
+  
+  private final Expression<?> rightSideExpression;
+  
+  private boolean notUsed;
+
+  public BetweenPredicateImpl(Expression<?> valueExpression, Expression<?> leftSideExpression,
+      Expression<?> rightSideExpression) {
+    super();
+    this.valueExpression = valueExpression;
+    this.leftSideExpression = leftSideExpression;
+    this.rightSideExpression = rightSideExpression;
+    this.notUsed = false;
+  }
+  
+  public Predicate not() {
+    this.notUsed = true;
+    return this;
   }
 
   @Override
   public String toSQLString() {
     StringBuilder queryBuilder = new StringBuilder();
-    queryBuilder.append(getLeftSideExpression().toSQLString()).append(" ");
-    if (isEqual()) {
-      queryBuilder.append("=");
-    } else {
-      queryBuilder.append("<>");
+    queryBuilder.append(valueExpression.toSQLString()).append(" ");
+    if (this.notUsed) {
+      queryBuilder.append("NOT").append(" ");
     }
-    queryBuilder.append(" ").append(getRightSideExpression().toSQLString());
+    queryBuilder.append("BETWEEN").append(" ");
+    queryBuilder.append(leftSideExpression.toSQLString()).append(" ").append("AND")
+      .append(" ").append(rightSideExpression.toSQLString());
     return queryBuilder.toString();
   }
 

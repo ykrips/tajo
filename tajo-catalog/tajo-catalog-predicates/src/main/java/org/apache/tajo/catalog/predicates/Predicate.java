@@ -44,8 +44,6 @@ public interface Predicate extends Expression<Boolean> {
 
   boolean isNot();
   
-  List<Expression<Boolean>> getExpressions();
-  
   Predicate not();
   
 }
