@@ -18,33 +18,23 @@
 
 package org.apache.tajo.catalog.predicates.spi;
 
-import org.apache.tajo.catalog.predicates.Expression;
+import org.apache.tajo.catalog.predicates.Predicate;
+import org.apache.tajo.catalog.predicates.SubQuery;
 
-public class LiteralImpl<T> extends AbstractExpressionImpl<T> implements Expression<T> {
+public class ExistsPredicateImpl extends AbstractPredicateImpl implements Predicate {
   
-  private T literal;
-
-  public LiteralImpl(Class<T> dataClass) {
-    super(dataClass);
-  }
+  private final SubQuery subQuery;
   
-  public Expression<T> setLiteralValue(T literal) {
-    this.literal = literal;
-    return this;
+  public ExistsPredicateImpl(SubQuery subQuery) {
+    this.subQuery = subQuery;
   }
 
   @Override
   public String toSQLString() {
-    Class<T> dataClass = getDataClass();
-    String returnValue;
-    
-    if (String.class.isAssignableFrom(dataClass)) {
-      returnValue = "'" + literal.toString() + "'";
-    } else {
-      returnValue = literal.toString();
-    }
-    
-    return returnValue;
+    StringBuilder existsBuilder = new StringBuilder();
+    existsBuilder.append("EXISTS").append(" ");
+    existsBuilder.append("(").append(subQuery.toSQLString()).append(")");
+    return existsBuilder.toString();
   }
 
 }

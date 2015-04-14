@@ -28,9 +28,11 @@ public interface SubQuery extends QuerySnipplet {
   
   SubQuery select(List<Expression<?>> expr);
   
-  SubQuery from(DBMSTable table);
+  SubQuery from(DBMSTable... tables);
   
   SubQuery join(DBMSTable left, DBMSTable right, JoinType joinType, Predicate... predicates);
+  
+  SubQuery where(Predicate... predicates);
   
   SubQuery groupBy(Expression<?>... expr);
   

@@ -26,11 +26,11 @@ import org.apache.tajo.catalog.predicates.Predicate;
 /**
  * 
  */
-public abstract class ExpressionImpl<T> implements Expression<T> {
+public abstract class AbstractExpressionImpl<T> implements Expression<T> {
   
   private final Class<T> dataClass;
   
-  public ExpressionImpl(Class<T> dataClass) {
+  public AbstractExpressionImpl(Class<T> dataClass) {
     this.dataClass = dataClass;
   }
   
@@ -62,7 +62,7 @@ public abstract class ExpressionImpl<T> implements Expression<T> {
     if (values == null || values.length == 0) {
       throw new IllegalArgumentException("values is null or empty.");
     }
-    Class<?> inDataClass = ((ExpressionImpl<?>)values[0]).getDataClass();
+    Class<?> inDataClass = ((AbstractExpressionImpl<?>)values[0]).getDataClass();
     return new InPredicate(inDataClass, this).addParameters(values);
   }
 

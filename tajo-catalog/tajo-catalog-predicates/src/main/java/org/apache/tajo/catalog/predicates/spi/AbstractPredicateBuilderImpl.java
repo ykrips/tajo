@@ -29,7 +29,7 @@ import org.apache.tajo.catalog.predicates.JoinTable;
 import org.apache.tajo.catalog.predicates.Order;
 import org.apache.tajo.catalog.predicates.Predicate;
 import org.apache.tajo.catalog.predicates.PredicateBuilder;
-import org.apache.tajo.common.TajoDataTypes.Type;
+import org.apache.tajo.catalog.predicates.SubQuery;
 
 public abstract class AbstractPredicateBuilderImpl implements PredicateBuilder {
 
@@ -210,6 +210,26 @@ public abstract class AbstractPredicateBuilderImpl implements PredicateBuilder {
   public JoinTable join(DBMSTable left, DBMSTable right, JoinType joinType, Predicate... predicates) {
     return ((JoinTableImpl) new JoinTableImpl(left, right).setJoinType(joinType))
         .setPredicates(Arrays.asList(predicates));
+  }
+
+  @Override
+  public Predicate exists(SubQuery subQuery) {
+    return new ExistsPredicateImpl(subQuery);
+  }
+
+  @Override
+  public <T> Expression<T> column(String canonicalName, Class<T> dataClass) {
+    return new ColumnExpressionImpl<T>(canonicalName, dataClass);
+  }
+
+  @Override
+  public <T> Expression<T> column(String tableName, String columnName, Class<T> dataClass) {
+    return new ColumnExpressionImpl<T>(tableName, columnName, dataClass);
+  }
+
+  @Override
+  public <T> Expression<T> literal(Class<T> dataClass, T data) {
+    return new LiteralImpl<T>(dataClass).setLiteralValue(data);
   }
 
 }

@@ -22,12 +22,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.tajo.catalog.CatalogUtil;
+import org.apache.tajo.catalog.predicates.derby.DerbyPredicateBuilderImpl;
 import org.apache.tajo.catalog.predicates.spi.DBMSTableImpl;
+import org.apache.tajo.catalog.predicates.spi.QueryImpl;
+import org.apache.tajo.catalog.predicates.spi.SubQueryImpl;
 
 /**
  * 
  */
-public class PredicateBuilderFactory {
+public class QueryBuilderFactory {
 
   public static enum DBMSType {
     Derby,
@@ -37,21 +40,30 @@ public class PredicateBuilderFactory {
     Oracle
   }
   
-  private static final PredicateBuilderFactory instance =
-      new PredicateBuilderFactory();
+  private static final QueryBuilderFactory instance = new QueryBuilderFactory();
   
-  public static PredicateBuilderFactory newInstance() {
+  public static QueryBuilderFactory newInstance() {
     return instance;
   }
   
-  private final Map<DBMSType, PredicateBuilder> builderMap;
+  private final Map<DBMSType, PredicateBuilder> predicateBuilderMap;
   
-  private PredicateBuilderFactory() {
-    builderMap = new HashMap<PredicateBuilderFactory.DBMSType, PredicateBuilder>(DBMSType.values().length);
+  private QueryBuilderFactory() {
+    predicateBuilderMap = 
+        new HashMap<QueryBuilderFactory.DBMSType, PredicateBuilder>(DBMSType.values().length);
+    predicateBuilderMap.put(DBMSType.Derby, new DerbyPredicateBuilderImpl());
+  }
+  
+  public Query getQuery() {
+    return new QueryImpl();
+  }
+  
+  public SubQuery getSubQuery() {
+    return new SubQueryImpl();
   }
   
   public PredicateBuilder getPredicateBuilder(DBMSType supportedDBMS) {
-    PredicateBuilder builder = builderMap.get(supportedDBMS);
+    PredicateBuilder builder = predicateBuilderMap.get(supportedDBMS);
     
     if (builder == null) {
       throw new UnsupportedOperationException(supportedDBMS + " is not supported yet.");

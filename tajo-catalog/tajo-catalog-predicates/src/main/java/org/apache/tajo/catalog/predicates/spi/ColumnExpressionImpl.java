@@ -18,33 +18,26 @@
 
 package org.apache.tajo.catalog.predicates.spi;
 
+import org.apache.tajo.catalog.CatalogUtil;
 import org.apache.tajo.catalog.predicates.Expression;
 
-public class LiteralImpl<T> extends AbstractExpressionImpl<T> implements Expression<T> {
+public class ColumnExpressionImpl<T> extends AbstractExpressionImpl<T> implements Expression<T> {
   
-  private T literal;
+  private String canonicalName;
 
-  public LiteralImpl(Class<T> dataClass) {
+  public ColumnExpressionImpl(String canonicalName, Class<T> dataClass) {
     super(dataClass);
+    this.canonicalName = canonicalName;
   }
   
-  public Expression<T> setLiteralValue(T literal) {
-    this.literal = literal;
-    return this;
+  public ColumnExpressionImpl(String tableName, String columnName, Class<T> dataClass) {
+    super(dataClass);
+    this.canonicalName = CatalogUtil.buildFQName(tableName, columnName);
   }
 
   @Override
   public String toSQLString() {
-    Class<T> dataClass = getDataClass();
-    String returnValue;
-    
-    if (String.class.isAssignableFrom(dataClass)) {
-      returnValue = "'" + literal.toString() + "'";
-    } else {
-      returnValue = literal.toString();
-    }
-    
-    return returnValue;
+    return canonicalName;
   }
 
 }

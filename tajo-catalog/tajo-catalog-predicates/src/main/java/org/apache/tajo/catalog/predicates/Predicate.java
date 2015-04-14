@@ -18,8 +18,6 @@
 
 package org.apache.tajo.catalog.predicates;
 
-import java.util.List;
-
 /**
  * Predicate defines the following manner.
  * 
@@ -31,8 +29,6 @@ import java.util.List;
  *         [ ESCAPE 'escape_exression' ]
  *     | expression [ NOT ] BETWEEN expression AND expression
  *     | expression IS [ NOT ] NULL
- *     | CONTAINS 
- *         ( { column | * } , 'contains_search_condition' ) 
  *     | expression [ NOT ] IN ( subquery | expression [ ,...n ] ) 
  *     | expression { = | &lt; &gt; | ! = | &gt; | &gt; = | ! &gt; | &lt; | &lt; = | ! &lt; }
  *         { ALL | SOME | ANY} ( subquery ) 

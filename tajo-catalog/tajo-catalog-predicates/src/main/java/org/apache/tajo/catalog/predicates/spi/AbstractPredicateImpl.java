@@ -23,7 +23,7 @@ import org.apache.tajo.catalog.predicates.Predicate;
 /**
  * 
  */
-public abstract class AbstractPredicateImpl extends ExpressionImpl<Boolean> implements Predicate {
+public abstract class AbstractPredicateImpl extends AbstractExpressionImpl<Boolean> implements Predicate {
   
   private boolean isNotAnnotated;
 

@@ -16,35 +16,31 @@
  * limitations under the License.
  */
 
-package org.apache.tajo.catalog.predicates.spi;
+package org.apache.tajo.catalog.predicates.derby;
+
+import java.sql.Date;
+import java.sql.Time;
+import java.sql.Timestamp;
 
 import org.apache.tajo.catalog.predicates.Expression;
+import org.apache.tajo.catalog.predicates.PredicateBuilder;
+import org.apache.tajo.catalog.predicates.spi.AbstractPredicateBuilderImpl;
 
-public class LiteralImpl<T> extends AbstractExpressionImpl<T> implements Expression<T> {
-  
-  private T literal;
+public class DerbyPredicateBuilderImpl extends AbstractPredicateBuilderImpl implements PredicateBuilder {
 
-  public LiteralImpl(Class<T> dataClass) {
-    super(dataClass);
-  }
-  
-  public Expression<T> setLiteralValue(T literal) {
-    this.literal = literal;
-    return this;
+  @Override
+  public Expression<Date> currentDate() {
+    return new CurrentDateExpressionImpl();
   }
 
   @Override
-  public String toSQLString() {
-    Class<T> dataClass = getDataClass();
-    String returnValue;
-    
-    if (String.class.isAssignableFrom(dataClass)) {
-      returnValue = "'" + literal.toString() + "'";
-    } else {
-      returnValue = literal.toString();
-    }
-    
-    return returnValue;
+  public Expression<Timestamp> currentTimestamp() {
+    return new CurrentTimestampExpressionImpl();
+  }
+
+  @Override
+  public Expression<Time> currentTime() {
+    return new CurrentTimeExpressionImpl();
   }
 
 }

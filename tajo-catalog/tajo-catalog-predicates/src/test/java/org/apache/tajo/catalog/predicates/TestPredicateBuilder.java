@@ -16,35 +16,25 @@
  * limitations under the License.
  */
 
-package org.apache.tajo.catalog.predicates.spi;
+package org.apache.tajo.catalog.predicates;
 
-import org.apache.tajo.catalog.predicates.Expression;
+import static org.junit.Assert.*;
 
-public class LiteralImpl<T> extends AbstractExpressionImpl<T> implements Expression<T> {
+import org.apache.tajo.catalog.predicates.QueryBuilderFactory.DBMSType;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+public class TestPredicateBuilder {
   
-  private T literal;
-
-  public LiteralImpl(Class<T> dataClass) {
-    super(dataClass);
+  private PredicateBuilder predicateBuilder;
+  
+  @BeforeClass
+  public void setUpClass() throws Exception {
+    predicateBuilder = QueryBuilderFactory.newInstance().getPredicateBuilder(DBMSType.Derby);
   }
   
-  public Expression<T> setLiteralValue(T literal) {
-    this.literal = literal;
-    return this;
-  }
-
-  @Override
-  public String toSQLString() {
-    Class<T> dataClass = getDataClass();
-    String returnValue;
-    
-    if (String.class.isAssignableFrom(dataClass)) {
-      returnValue = "'" + literal.toString() + "'";
-    } else {
-      returnValue = literal.toString();
-    }
-    
-    return returnValue;
+  @Test
+  public void testAscendingOrder() throws Exception {
   }
 
 }

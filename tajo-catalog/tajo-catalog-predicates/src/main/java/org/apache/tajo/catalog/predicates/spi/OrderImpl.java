@@ -65,6 +65,10 @@ public class OrderImpl implements Order {
     StringBuilder queryBuilder = new StringBuilder();
     boolean first = true;
     for (Expression<?> expr: expressionList) {
+      if (!(expr instanceof ColumnExpressionImpl)) {
+        throw new IllegalArgumentException(expr.toSQLString() + " should be a column.");
+      }
+      
       if (!first) {
         queryBuilder.append(',');
       }

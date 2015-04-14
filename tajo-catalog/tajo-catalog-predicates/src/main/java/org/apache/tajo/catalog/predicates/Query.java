@@ -23,14 +23,16 @@ import java.util.List;
 import org.apache.tajo.algebra.JoinType;
 
 public interface Query extends QuerySnipplet {
-
+  
   Query select(Expression<?>... expr);
   
   Query select(List<Expression<?>> expr);
   
-  Query from(DBMSTable table);
+  Query from(DBMSTable... tables);
   
   Query join(DBMSTable left, DBMSTable right, JoinType joinType, Predicate... predicates);
+  
+  Query where(Predicate... predicates);
   
   Query groupBy(Expression<?>... expr);
   

@@ -16,35 +16,22 @@
  * limitations under the License.
  */
 
-package org.apache.tajo.catalog.predicates.spi;
+package org.apache.tajo.catalog.predicates.derby;
+
+import java.sql.Time;
 
 import org.apache.tajo.catalog.predicates.Expression;
+import org.apache.tajo.catalog.predicates.spi.AbstractExpressionImpl;
 
-public class LiteralImpl<T> extends AbstractExpressionImpl<T> implements Expression<T> {
-  
-  private T literal;
+public class CurrentTimeExpressionImpl extends AbstractExpressionImpl<Time> implements Expression<Time> {
 
-  public LiteralImpl(Class<T> dataClass) {
-    super(dataClass);
-  }
-  
-  public Expression<T> setLiteralValue(T literal) {
-    this.literal = literal;
-    return this;
+  public CurrentTimeExpressionImpl() {
+    super(Time.class);
   }
 
   @Override
   public String toSQLString() {
-    Class<T> dataClass = getDataClass();
-    String returnValue;
-    
-    if (String.class.isAssignableFrom(dataClass)) {
-      returnValue = "'" + literal.toString() + "'";
-    } else {
-      returnValue = literal.toString();
-    }
-    
-    return returnValue;
+    return "CURRENT_TIME";
   }
 
 }

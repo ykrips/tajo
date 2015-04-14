@@ -23,7 +23,6 @@ import java.sql.Time;
 import java.sql.Timestamp;
 
 import org.apache.tajo.algebra.JoinType;
-import org.apache.tajo.common.TajoDataTypes;
 
 /**
  * Create a simple query builder using some predicate clauses.
@@ -101,5 +100,16 @@ public interface PredicateBuilder {
   
   // join
   JoinTable join(DBMSTable left, DBMSTable right, JoinType joinType, Predicate... predicates);
+  
+  // exists
+  Predicate exists(SubQuery subQuery);
+  
+  // column expression
+  <T> Expression<T> column(String canonicalName, Class<T> dataClass);
+  
+  <T> Expression<T> column(String tableName, String columnName, Class<T> dataClass);
+  
+  // literal
+  <T> Expression<T> literal(Class<T> dataClass, T data);
   
 }
