@@ -23,12 +23,16 @@ import java.util.Map;
 
 import org.apache.tajo.catalog.CatalogUtil;
 import org.apache.tajo.catalog.predicates.derby.DerbyPredicateBuilderImpl;
+import org.apache.tajo.catalog.predicates.mariadb.MariaDBPredicateBuilderImpl;
+import org.apache.tajo.catalog.predicates.mysql.MySQLPredicateBuilderImpl;
+import org.apache.tajo.catalog.predicates.oracle.OraclePredicateBuilderImpl;
+import org.apache.tajo.catalog.predicates.postgresql.PostgreSQLPredicateBuilderImpl;
 import org.apache.tajo.catalog.predicates.spi.DBMSTableImpl;
 import org.apache.tajo.catalog.predicates.spi.QueryImpl;
 import org.apache.tajo.catalog.predicates.spi.SubQueryImpl;
 
 /**
- * 
+ * Factory class which is responsible for creating query, subquery, predicate builder, and dbms table object.
  */
 public class QueryBuilderFactory {
 
@@ -52,6 +56,10 @@ public class QueryBuilderFactory {
     predicateBuilderMap = 
         new HashMap<QueryBuilderFactory.DBMSType, PredicateBuilder>(DBMSType.values().length);
     predicateBuilderMap.put(DBMSType.Derby, new DerbyPredicateBuilderImpl());
+    predicateBuilderMap.put(DBMSType.MySQL, new MySQLPredicateBuilderImpl());
+    predicateBuilderMap.put(DBMSType.MariaDB, new MariaDBPredicateBuilderImpl());
+    predicateBuilderMap.put(DBMSType.PostgreSQL, new PostgreSQLPredicateBuilderImpl());
+    predicateBuilderMap.put(DBMSType.Oracle, new OraclePredicateBuilderImpl());
   }
   
   public Query newQuery() {
