@@ -55,7 +55,7 @@ public abstract class AbstractPredicateBuilderImpl implements PredicateBuilder {
     
     while (tempDeque.size() > 1) {
       Predicate andPredicate = and(tempDeque.poll(), tempDeque.poll());
-      tempDeque.add(andPredicate);
+      tempDeque.addFirst(andPredicate);
     }
     
     if (tempDeque.size() == 1) {
@@ -77,7 +77,7 @@ public abstract class AbstractPredicateBuilderImpl implements PredicateBuilder {
     
     while (tempDeque.size() > 1) {
       Predicate orPredicate = or(tempDeque.poll(), tempDeque.poll());
-      tempDeque.add(orPredicate);
+      tempDeque.addFirst(orPredicate);
     }
     
     if (tempDeque.size() == 1) {
@@ -93,6 +93,11 @@ public abstract class AbstractPredicateBuilderImpl implements PredicateBuilder {
   }
 
   @Override
+  public Predicate parentheses(Expression<Boolean> expr) {
+    return new ParenthesesPredicateImpl(expr);
+  }
+
+  @Override
   public Predicate isNull(Expression<?> expr) {
     return new IsNullPredicate(expr);
   }
@@ -104,12 +109,12 @@ public abstract class AbstractPredicateBuilderImpl implements PredicateBuilder {
 
   @Override
   public Predicate equal(Expression<?> left, Expression<?> right) {
-    return new EqualPredicateImpl(left, right);
+    return new EqualPredicateImpl(left, right).equal();
   }
 
   @Override
   public <T> Predicate equal(Expression<?> left, Class<T> dataType, T right) {
-    return new EqualPredicateImpl(left, new LiteralImpl<T>(dataType).setLiteralValue(right));
+    return new EqualPredicateImpl(left, new LiteralImpl<T>(dataType).setLiteralValue(right)).equal();
   }
 
   @Override
@@ -215,6 +220,11 @@ public abstract class AbstractPredicateBuilderImpl implements PredicateBuilder {
   @Override
   public Predicate exists(SubQuery subQuery) {
     return new ExistsPredicateImpl(subQuery);
+  }
+
+  @Override
+  public Predicate notExists(SubQuery subQuery) {
+    return new ExistsPredicateImpl(subQuery).not();
   }
 
   @Override

@@ -57,7 +57,13 @@ public class DBMSTableImpl implements DBMSTable {
 
   @Override
   public String toSQLString() {
-    return CatalogUtil.getCanonicalTableName(databaseName, tableName);
+    String canonicalTableName;
+    if (databaseName != null && !databaseName.isEmpty()) {
+      canonicalTableName = CatalogUtil.getCanonicalTableName(databaseName, tableName);
+    } else {
+      canonicalTableName = tableName;
+    }
+    return canonicalTableName;
   }
   
 }

@@ -32,6 +32,9 @@ public class ExistsPredicateImpl extends AbstractPredicateImpl implements Predic
   @Override
   public String toSQLString() {
     StringBuilder existsBuilder = new StringBuilder();
+    if (isNot()) {
+      existsBuilder.append("NOT").append(" ");
+    }
     existsBuilder.append("EXISTS").append(" ");
     existsBuilder.append("(").append(subQuery.toSQLString()).append(")");
     return existsBuilder.toString();

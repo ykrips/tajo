@@ -29,14 +29,11 @@ public class LikePredicateImpl extends AbstractPredicateImpl implements Predicat
   
   private final char escapeChar;
   
-  private boolean notUsed;
-  
   public LikePredicateImpl(Expression<String> valueExpression, String patternString) {
     super();
     this.valueExpression = valueExpression;
     this.patternString = patternString;
     this.escapeChar = Character.MAX_VALUE;
-    this.notUsed = false;
   }
 
   public LikePredicateImpl(Expression<String> valueExpression, String patternString, char escapeChar) {
@@ -44,15 +41,14 @@ public class LikePredicateImpl extends AbstractPredicateImpl implements Predicat
     this.valueExpression = valueExpression;
     this.patternString = patternString;
     this.escapeChar = escapeChar;
-    this.notUsed = false;
   }
 
   @Override
   public String toSQLString() {
     StringBuilder queryBuilder = new StringBuilder();
-    queryBuilder.append(valueExpression.toSQLString()).append(" ");
-    if (this.notUsed) {
-      queryBuilder.append("NOT");
+    queryBuilder.append(valueExpression.toSQLString());
+    if (isNot()) {
+      queryBuilder.append(" ").append("NOT");
     }
     queryBuilder.append(" ").append("LIKE");
     queryBuilder.append(" ").append("'").append(patternString).append("'");

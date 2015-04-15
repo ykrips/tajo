@@ -28,8 +28,6 @@ public class BetweenPredicateImpl extends AbstractPredicateImpl implements Predi
   private final Expression<?> leftSideExpression;
   
   private final Expression<?> rightSideExpression;
-  
-  private boolean notUsed;
 
   public BetweenPredicateImpl(Expression<?> valueExpression, Expression<?> leftSideExpression,
       Expression<?> rightSideExpression) {
@@ -37,19 +35,13 @@ public class BetweenPredicateImpl extends AbstractPredicateImpl implements Predi
     this.valueExpression = valueExpression;
     this.leftSideExpression = leftSideExpression;
     this.rightSideExpression = rightSideExpression;
-    this.notUsed = false;
-  }
-  
-  public Predicate not() {
-    this.notUsed = true;
-    return this;
   }
 
   @Override
   public String toSQLString() {
     StringBuilder queryBuilder = new StringBuilder();
     queryBuilder.append(valueExpression.toSQLString()).append(" ");
-    if (this.notUsed) {
+    if (isNot()) {
       queryBuilder.append("NOT").append(" ");
     }
     queryBuilder.append("BETWEEN").append(" ");

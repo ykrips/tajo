@@ -42,7 +42,7 @@ public class QueryBuilderFactory {
   
   private static final QueryBuilderFactory instance = new QueryBuilderFactory();
   
-  public static QueryBuilderFactory newInstance() {
+  public static QueryBuilderFactory getInstance() {
     return instance;
   }
   
@@ -54,11 +54,11 @@ public class QueryBuilderFactory {
     predicateBuilderMap.put(DBMSType.Derby, new DerbyPredicateBuilderImpl());
   }
   
-  public Query getQuery() {
+  public Query newQuery() {
     return new QueryImpl();
   }
   
-  public SubQuery getSubQuery() {
+  public SubQuery newSubQuery() {
     return new SubQueryImpl();
   }
   
@@ -78,11 +78,12 @@ public class QueryBuilderFactory {
     }
     
     DBMSTable dbmsTable;
-    String[] splittedTableNames = CatalogUtil.splitTableName(canonicalName);
+    
     if (CatalogUtil.isFQTableName(canonicalName)) {
+      String[] splittedTableNames = CatalogUtil.splitTableName(canonicalName);
       dbmsTable = new DBMSTableImpl(splittedTableNames[0], splittedTableNames[1]);
     } else {
-      dbmsTable = new DBMSTableImpl("", splittedTableNames[0]);
+      dbmsTable = new DBMSTableImpl("", canonicalName);
     }
     
     return dbmsTable;

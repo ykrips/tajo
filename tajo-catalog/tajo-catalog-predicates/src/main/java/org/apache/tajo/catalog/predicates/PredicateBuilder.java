@@ -45,6 +45,8 @@ public interface PredicateBuilder {
   
   Predicate not(Expression<Boolean> expr);
   
+  Predicate parentheses(Expression<Boolean> expr);
+  
   // check null
   Predicate isNull(Expression<?> expr);
   
@@ -103,6 +105,8 @@ public interface PredicateBuilder {
   
   // exists
   Predicate exists(SubQuery subQuery);
+  
+  Predicate notExists(SubQuery subQuery);
   
   // column expression
   <T> Expression<T> column(String canonicalName, Class<T> dataClass);

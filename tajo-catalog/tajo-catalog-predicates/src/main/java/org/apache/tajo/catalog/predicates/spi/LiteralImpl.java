@@ -38,7 +38,7 @@ public class LiteralImpl<T> extends AbstractExpressionImpl<T> implements Express
     Class<T> dataClass = getDataClass();
     String returnValue;
     
-    if (String.class.isAssignableFrom(dataClass)) {
+    if (CharSequence.class.isAssignableFrom(dataClass)) {
       returnValue = "'" + literal.toString() + "'";
     } else {
       returnValue = literal.toString();

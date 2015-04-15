@@ -21,47 +21,19 @@ package org.apache.tajo.catalog.predicates.spi;
 import org.apache.tajo.catalog.predicates.Expression;
 import org.apache.tajo.catalog.predicates.Predicate;
 
-public abstract class AbstractComparisonPredicateImpl extends AbstractPredicateImpl implements Predicate {
-
-  private final Expression<?> leftSideExpression;
+public class ParenthesesPredicateImpl extends AbstractPredicateImpl implements Predicate {
   
-  private final Expression<?> rightSideExpression;
+  private final Expression<Boolean> expression;
   
-  private boolean equal;
-
-  public AbstractComparisonPredicateImpl(Expression<?> leftSideExpression, Expression<?> rightSideExpression) {
-    super();
-    this.leftSideExpression = leftSideExpression;
-    this.rightSideExpression = rightSideExpression;
-    this.equal = false;
-  }
-  
-  public Predicate equal() {
-    this.equal = true;
-    return this;
-  }
-
-  public Expression<?> getLeftSideExpression() {
-    return leftSideExpression;
-  }
-
-  public Expression<?> getRightSideExpression() {
-    return rightSideExpression;
-  }
-
-  public boolean isEqual() {
-    return equal;
+  public ParenthesesPredicateImpl(Expression<Boolean> expression) {
+    this.expression = expression;
   }
 
   @Override
-  public boolean isNot() {
-    return !equal;
+  public String toSQLString() {
+    StringBuilder parenBuilder = new StringBuilder();
+    parenBuilder.append("(").append(expression.toSQLString()).append(")");
+    return parenBuilder.toString();
   }
 
-  @Override
-  public Predicate not() {
-    equal = false;
-    return this;
-  }
-  
 }
