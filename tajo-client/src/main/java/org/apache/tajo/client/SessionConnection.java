@@ -30,16 +30,16 @@ import org.apache.tajo.ipc.ClientProtos.ResultCode;
 import org.apache.tajo.ipc.ClientProtos.SessionUpdateResponse;
 import org.apache.tajo.ipc.TajoMasterClientProtocol;
 import org.apache.tajo.rpc.NettyClientBase;
-import org.apache.tajo.rpc.RpcConnectionPool;
+import org.apache.tajo.rpc.RpcClientManager;
+import org.apache.tajo.rpc.RpcConstants;
 import org.apache.tajo.rpc.ServerCallable;
 import org.apache.tajo.service.ServiceTracker;
 import org.apache.tajo.util.KeyValueSet;
 import org.apache.tajo.util.ProtoUtil;
 
-import io.netty.channel.ConnectTimeoutException;
-
 import java.io.Closeable;
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.HashMap;
@@ -55,7 +55,7 @@ public class SessionConnection implements Closeable {
 
   private final Log LOG = LogFactory.getLog(TajoClientImpl.class);
 
-  final RpcConnectionPool connPool;
+  final RpcClientManager manager;
 
   private String baseDatabase;
 
@@ -86,8 +86,12 @@ public class SessionConnection implements Closeable {
 
     this.properties = properties;
 
-    connPool = RpcConnectionPool.getPool();
-    userInfo = UserRoleInfo.getCurrentUser();
+    this.manager = RpcClientManager.getInstance();
+    this.manager.setRetries(properties.getInt(RpcConstants.RPC_CLIENT_RETRY_MAX, RpcConstants.DEFAULT_RPC_RETRIES));
+    this.manager.setTimeoutSeconds(
+        properties.getInt(RpcConstants.RPC_CLIENT_TIMEOUT_SECS, 0)); // disable rpc timeout
+
+    this.userInfo = UserRoleInfo.getCurrentUser();
     this.baseDatabase = baseDatabase != null ? baseDatabase : null;
 
     this.serviceTracker = tracker;
@@ -98,13 +102,13 @@ public class SessionConnection implements Closeable {
   }
 
   public NettyClientBase getTajoMasterConnection(boolean asyncMode) throws NoSuchMethodException,
-      ConnectTimeoutException, ClassNotFoundException {
-    return connPool.getConnection(getTajoMasterAddr(), TajoMasterClientProtocol.class, asyncMode);
+      ConnectException, ClassNotFoundException {
+    return manager.getClient(getTajoMasterAddr(), TajoMasterClientProtocol.class, asyncMode);
   }
 
   public NettyClientBase getConnection(InetSocketAddress addr, Class protocolClass, boolean asyncMode)
-      throws NoSuchMethodException, ConnectTimeoutException, ClassNotFoundException {
-    return connPool.getConnection(addr, protocolClass, asyncMode);
+      throws NoSuchMethodException, ConnectException, ClassNotFoundException {
+    return manager.getClient(addr, protocolClass, asyncMode);
   }
 
   protected KeyValueSet getProperties() {
@@ -127,7 +131,7 @@ public class SessionConnection implements Closeable {
   public boolean isConnected() {
     if(!closed.get()){
       try {
-        return connPool.getConnection(serviceTracker.getClientServiceAddress(),
+        return manager.getClient(serviceTracker.getClientServiceAddress(),
             TajoMasterClientProtocol.class, false).isConnected();
       } catch (Throwable e) {
         return false;
@@ -141,7 +145,7 @@ public class SessionConnection implements Closeable {
   }
 
   public String getCurrentDatabase() throws ServiceException {
-    return new ServerCallable<String>(connPool, getTajoMasterAddr(), TajoMasterClientProtocol.class, false, true) {
+    return new ServerCallable<String>(manager, getTajoMasterAddr(), TajoMasterClientProtocol.class, false) {
 
       public String call(NettyClientBase client) throws ServiceException {
         checkSessionAndGet(client);
@@ -153,8 +157,8 @@ public class SessionConnection implements Closeable {
   }
 
   public Map<String, String> updateSessionVariables(final Map<String, String> variables) throws ServiceException {
-    return new ServerCallable<Map<String, String>>(connPool, getTajoMasterAddr(),
-        TajoMasterClientProtocol.class, false, true) {
+    return new ServerCallable<Map<String, String>>(manager, getTajoMasterAddr(),
+        TajoMasterClientProtocol.class, false) {
 
       public Map<String, String> call(NettyClientBase client) throws ServiceException {
         checkSessionAndGet(client);
@@ -179,7 +183,7 @@ public class SessionConnection implements Closeable {
   }
 
   public Map<String, String> unsetSessionVariables(final List<String> variables)  throws ServiceException {
-    return new ServerCallable<Map<String, String>>(connPool, getTajoMasterAddr(), TajoMasterClientProtocol.class, false, true) {
+    return new ServerCallable<Map<String, String>>(manager, getTajoMasterAddr(), TajoMasterClientProtocol.class, false) {
 
       public Map<String, String> call(NettyClientBase client) throws ServiceException {
         checkSessionAndGet(client);
@@ -209,7 +213,7 @@ public class SessionConnection implements Closeable {
   }
 
   public String getSessionVariable(final String varname) throws ServiceException {
-    return new ServerCallable<String>(connPool, getTajoMasterAddr(), TajoMasterClientProtocol.class, false, true) {
+    return new ServerCallable<String>(manager, getTajoMasterAddr(), TajoMasterClientProtocol.class, false) {
 
       public String call(NettyClientBase client) throws ServiceException {
 
@@ -229,7 +233,7 @@ public class SessionConnection implements Closeable {
   }
 
   public Boolean existSessionVariable(final String varname) throws ServiceException {
-    return new ServerCallable<Boolean>(connPool, getTajoMasterAddr(), TajoMasterClientProtocol.class, false, true) {
+    return new ServerCallable<Boolean>(manager, getTajoMasterAddr(), TajoMasterClientProtocol.class, false) {
 
       public Boolean call(NettyClientBase client) throws ServiceException {
         checkSessionAndGet(client);
@@ -247,8 +251,8 @@ public class SessionConnection implements Closeable {
   }
 
   public Map<String, String> getAllSessionVariables() throws ServiceException {
-    return new ServerCallable<Map<String, String>>(connPool, getTajoMasterAddr(), TajoMasterClientProtocol.class,
-        false, true) {
+    return new ServerCallable<Map<String, String>>(manager, getTajoMasterAddr(), TajoMasterClientProtocol.class,
+        false) {
 
       public Map<String, String> call(NettyClientBase client) throws ServiceException {
         checkSessionAndGet(client);
@@ -260,8 +264,8 @@ public class SessionConnection implements Closeable {
   }
 
   public Boolean selectDatabase(final String databaseName) throws ServiceException {
-    Boolean selected = new ServerCallable<Boolean>(connPool, getTajoMasterAddr(),
-        TajoMasterClientProtocol.class, false, true) {
+    Boolean selected = new ServerCallable<Boolean>(manager, getTajoMasterAddr(),
+        TajoMasterClientProtocol.class, false) {
 
       public Boolean call(NettyClientBase client) throws ServiceException {
         checkSessionAndGet(client);
@@ -286,13 +290,13 @@ public class SessionConnection implements Closeable {
     // remove session
     NettyClientBase client = null;
     try {
-      client = connPool.getConnection(getTajoMasterAddr(), TajoMasterClientProtocol.class, false);
+      client = manager.getClient(getTajoMasterAddr(), TajoMasterClientProtocol.class, false);
       TajoMasterClientProtocolService.BlockingInterface tajoMaster = client.getStub();
       tajoMaster.removeSession(null, sessionId);
     } catch (Throwable e) {
       // ignore
     } finally {
-      connPool.releaseConnection(client);
+      RpcClientManager.cleanup(client);
     }
   }
 
@@ -329,7 +333,7 @@ public class SessionConnection implements Closeable {
   }
 
   public boolean reconnect() throws Exception {
-    return new ServerCallable<Boolean>(connPool, getTajoMasterAddr(), TajoMasterClientProtocol.class, false, true) {
+    return new ServerCallable<Boolean>(manager, getTajoMasterAddr(), TajoMasterClientProtocol.class, false) {
 
       public Boolean call(NettyClientBase client) throws ServiceException {
         CreateSessionRequest.Builder builder = CreateSessionRequest.newBuilder();

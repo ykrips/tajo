@@ -21,10 +21,7 @@ package org.apache.tajo.master;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.CommonConfigurationKeysPublic;
-import org.apache.hadoop.fs.FSDataOutputStream;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.*;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.service.CompositeService;
@@ -36,15 +33,19 @@ import org.apache.hadoop.yarn.util.RackResolver;
 import org.apache.hadoop.yarn.util.SystemClock;
 import org.apache.tajo.catalog.CatalogServer;
 import org.apache.tajo.catalog.CatalogService;
+import org.apache.tajo.catalog.FunctionDesc;
 import org.apache.tajo.catalog.LocalCatalogWrapper;
 import org.apache.tajo.conf.TajoConf;
 import org.apache.tajo.conf.TajoConf.ConfVars;
 import org.apache.tajo.engine.function.FunctionLoader;
+import org.apache.tajo.function.FunctionSignature;
 import org.apache.tajo.master.rm.TajoWorkerResourceManager;
 import org.apache.tajo.master.rm.WorkerResourceManager;
 import org.apache.tajo.metrics.CatalogMetricsGaugeSet;
 import org.apache.tajo.metrics.WorkerResourceMetricsGaugeSet;
 import org.apache.tajo.rpc.RpcChannelFactory;
+import org.apache.tajo.rpc.RpcClientManager;
+import org.apache.tajo.rpc.RpcConstants;
 import org.apache.tajo.rule.EvaluationContext;
 import org.apache.tajo.rule.EvaluationFailedException;
 import org.apache.tajo.rule.SelfDiagnosisRuleEngine;
@@ -68,7 +69,9 @@ import java.lang.management.ThreadMXBean;
 import java.lang.reflect.Constructor;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import static org.apache.tajo.TajoConstants.DEFAULT_DATABASE_NAME;
 import static org.apache.tajo.TajoConstants.DEFAULT_TABLESPACE_NAME;
@@ -166,8 +169,12 @@ public class TajoMaster extends CompositeService {
     try {
       RackResolver.init(systemConf);
 
+      RpcClientManager rpcManager = RpcClientManager.getInstance();
+      rpcManager.setRetries(systemConf.getInt(RpcConstants.RPC_CLIENT_RETRY_MAX, RpcConstants.DEFAULT_RPC_RETRIES));
+      rpcManager.setTimeoutSeconds(
+          systemConf.getInt(RpcConstants.RPC_CLIENT_TIMEOUT_SECS, RpcConstants.DEFAULT_RPC_TIMEOUT_SECONDS));
+
       initResourceManager();
-      initWebServer();
 
       this.dispatcher = new AsyncDispatcher();
       addIfService(dispatcher);
@@ -177,7 +184,7 @@ public class TajoMaster extends CompositeService {
       diagnoseTajoMaster();
       this.storeManager = StorageManager.getFileStorageManager(systemConf);
 
-      catalogServer = new CatalogServer(FunctionLoader.load());
+      catalogServer = new CatalogServer(loadFunctions());
       addIfService(catalogServer);
       catalog = new LocalCatalogWrapper(catalogServer, systemConf);
 
@@ -205,6 +212,11 @@ public class TajoMaster extends CompositeService {
 
     super.serviceInit(systemConf);
     LOG.info("Tajo Master is initialized.");
+  }
+
+  private Collection<FunctionDesc> loadFunctions() throws IOException {
+    Map<FunctionSignature, FunctionDesc> functionMap = FunctionLoader.load();
+    return FunctionLoader.loadUserDefinedFunctions(systemConf, functionMap).values();
   }
 
   private void initSystemMetrics() {
@@ -322,6 +334,7 @@ public class TajoMaster extends CompositeService {
       LOG.error(e.getMessage(), e);
     }
 
+    initWebServer();
     initSystemMetrics();
 
     haService = ServiceTrackerFactory.get(systemConf);
