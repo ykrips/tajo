@@ -28,7 +28,7 @@ import org.apache.tajo.catalog.predicates.mysql.MySQLPredicateBuilderImpl;
 import org.apache.tajo.catalog.predicates.oracle.OraclePredicateBuilderImpl;
 import org.apache.tajo.catalog.predicates.postgresql.PostgreSQLPredicateBuilderImpl;
 import org.apache.tajo.catalog.predicates.spi.DBMSTableImpl;
-import org.apache.tajo.catalog.predicates.spi.QueryImpl;
+import org.apache.tajo.catalog.predicates.spi.AbstractQueryImpl;
 import org.apache.tajo.catalog.predicates.spi.SubQueryImpl;
 
 /**
@@ -63,7 +63,7 @@ public class QueryBuilderFactory {
   }
   
   public Query newQuery() {
-    return new QueryImpl();
+    return new AbstractQueryImpl();
   }
   
   public SubQuery newSubQuery() {

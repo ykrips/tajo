@@ -30,13 +30,13 @@ import org.apache.tajo.catalog.predicates.Predicate;
 import org.apache.tajo.catalog.predicates.Query;
 import org.apache.tajo.catalog.predicates.SubQuery;
 
-public class QueryImpl implements Query {
+public abstract class AbstractQueryImpl implements Query {
   
   private final SubQuery subQuery;
   
   private final List<Order> orderClause;
   
-  public QueryImpl() {
+  public AbstractQueryImpl() {
     this.subQuery = new SubQueryImpl();
     this.orderClause = new ArrayList<Order>();
   }
